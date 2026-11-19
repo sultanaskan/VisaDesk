@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.routes.js";
@@ -12,7 +13,9 @@ import catalogRoutes from "./routes/catalog.routes.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const projectParent = path.resolve(apiRoot, "..");
+const projectRoot = fs.existsSync(path.join(projectParent, "client-portal")) ? projectParent : apiRoot;
 app.use(helmet());
 const configuredOrigins = process.env.CLIENT_ORIGIN?.trim();
 const corsOptions = {
