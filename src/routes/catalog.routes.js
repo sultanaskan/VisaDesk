@@ -1,0 +1,12 @@
+import {Router} from "express";
+import {authenticate,authorize} from "../middleware/auth.js";
+import {validate} from "../middleware/validate.js";
+import {countrySchema,categorySchema,centerSchema} from "../validators/schemas.js";
+import {listCountries,listCategories,listCenters,createCountry,createCategory,createCenter} from "../controllers/catalog.controller.js";
+import {asyncHandler} from "../utils/asyncHandler.js";
+const router=Router();
+router.get("/countries",asyncHandler(listCountries));router.get("/categories",asyncHandler(listCategories));router.get("/centers",asyncHandler(listCenters));
+router.post("/admin/countries",authenticate,authorize("ADMIN"),validate(countrySchema),asyncHandler(createCountry));
+router.post("/admin/categories",authenticate,authorize("ADMIN"),validate(categorySchema),asyncHandler(createCategory));
+router.post("/admin/centers",authenticate,authorize("ADMIN"),validate(centerSchema),asyncHandler(createCenter));
+export default router;
