@@ -1,4 +1,6 @@
 import "dotenv/config";
+import fs from "node:fs";
+import path from "node:path";
 import { spawnSync } from "node:child_process";
 import mysql from "mysql2/promise";
 
@@ -43,16 +45,16 @@ async function ensureDatabase() {
 
   const config = getDatabaseConfig(process.env.DATABASE_URL);
   console.log(`[setup] Connecting to MySQL at ${config.host}:${config.port}...`);
-const connection = await mysql.createConnection({
-  host: config.host,
-  port: config.port,
-  user: config.user,
-  password: config.password,
-  ssl: {
-    minVersion: "TLSv1.2"
-  },
-  connectTimeout: 10000
-});
+  const connection = await mysql.createConnection({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    ssl: {
+      minVersion: "TLSv1.2"
+    },
+    connectTimeout: 10000
+  });
 
   try {
     const [rows] = await connection.execute(
@@ -73,22 +75,29 @@ const connection = await mysql.createConnection({
   }
 }
 
-async function main() {
+export async function runBootstrap() {
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
     throw new Error("JWT_SECRET must contain at least 32 characters. Set it in .env.");
   }
 
   await ensureDatabase();
 
-  
-    const prismaCli = "node_modules/prisma/build/index.js";
+  const prismaCli = "node_modules/prisma/build/index.js";
+  const prismaClientFile = path.resolve("node_modules/.prisma/client/index.js");
 
+  // Only generate Prisma Client if it hasn't been generated yet (prevents Windows EPERM file locks)
+  if (!fs.existsSync(prismaClientFile)) {
     run(
       process.execPath,
       [prismaCli, "generate"],
       "Generate Prisma Client"
     );
+  } else {
+    console.log("\n[setup] Prisma Client already generated, skipping...");
+  }
 
+  // Skip slow schema push & seeding in Passenger production mode
+  if (process.env.NODE_ENV !== "production") {
     run(
       process.execPath,
       [prismaCli, "db", "push", "--skip-generate"],
@@ -100,17 +109,17 @@ async function main() {
       ["prisma/seed.js"],
       "Create initial admin and demo catalog"
     );
-
+  }
 
   console.log("\n[setup] Setup completed. Starting the API...");
 }
 
-main().catch((error) => {
-  console.error("\n[setup] Automatic setup failed.");
-  console.error(error.message);
-  console.error(
-    "\nCheck that MySQL Server is running and the DATABASE_URL username/password are correct. " +
-    "The MySQL account must have permission to create the database and tables."
-  );
-  process.exit(1);
-});
+// Run immediately if executed directly via `npm run setup`
+const isDirectRun = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"));
+if (isDirectRun) {
+  runBootstrap().catch((error) => {
+    console.error("\n[setup] Automatic setup failed.");
+    console.error(error.message);
+    process.exit(1);
+  });
+}
