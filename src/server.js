@@ -12,7 +12,7 @@ async function start() {
     throw new Error("JWT_SECRET must be set and contain at least 32 characters.");
   }
   await prisma.$connect();
-  app.listen(port, () => console.log(`Visa Agency API listening on http://localhost:${port}`));
+  app.listen(port, "0.0.0.0",() => console.log(`Visa Agency API listening on http://localhost:${port}`));
 }
 
 start().catch((error) => {
