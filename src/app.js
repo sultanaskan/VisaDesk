@@ -44,11 +44,11 @@ app.use("/api/v1/priorities", priorityRoutes);
 app.use("/api/v1/catalog", catalogRoutes);
 
 // Serve both role-based workspaces from the API origin for a single deployment.
-app.use("/admin", express.static(path.join(projectRoot, "visa-slot-admin-portal"), { index: "index.html", fallthrough: true, maxAge: "1h" }));
-app.get("/admin", (req, res) => res.sendFile(path.join(projectRoot, "visa-slot-admin-portal", "index.html")));
+app.use("/admin", express.static(path.join(projectRoot, "admin-portal"), { index: "index.html", fallthrough: true, maxAge: "1h" }));
+app.get("/admin", (req, res) => res.sendFile(path.join(projectRoot, "admin-portal", "index.html")));
 app.get("/admin/*", (req, res, next) => {
   if (path.extname(req.path)) return next();
-  res.sendFile(path.join(projectRoot, "visa-slot-admin-portal", "index.html"));
+  res.sendFile(path.join(projectRoot, "admin-portal", "index.html"));
 });
 app.use(express.static(path.join(projectRoot, "client-portal"), { index: "index.html", fallthrough: true, maxAge: "1h" }));
 
