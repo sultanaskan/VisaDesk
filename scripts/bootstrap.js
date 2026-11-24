@@ -2,7 +2,11 @@ import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 import mysql from "mysql2/promise";
+
+dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".env") });
 
 function run(command, args, label) {
   console.log(`\n[setup] ${label}...`);
@@ -81,6 +85,9 @@ export async function runBootstrap() {
   }
 
   await ensureDatabase();
+
+  const credentialKey = process.env.BOOKING_CREDENTIAL_KEY || "";
+  console.log(`[setup] Booking credential encryption key: ${/^[a-f\d]{64}$/i.test(credentialKey) ? "configured" : "missing or invalid (expected 64 hexadecimal characters)"}.`);
 
   const prismaCli = "node_modules/prisma/build/index.js";
   const prismaClientFile = path.resolve("node_modules/.prisma/client/index.js");

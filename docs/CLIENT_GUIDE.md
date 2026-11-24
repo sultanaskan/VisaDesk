@@ -4,17 +4,17 @@
 
 Choose Agent if you represent an agency and need to submit multiple applicant files under one account. Choose Individual if you are submitting your own application(s). Account roles are selected at registration; the API does not currently provide a self-service role conversion.
 
-## 2. Create an application
+## 2. Request an appointment slot
 
 Submit the applicant's name and passport number, then select:
 1. From Country.
 2. To Country.
 3. Visa Category.
 4. Application Center (the current system lists centers in the From Country).
-5. Optional visa type, contact information and notes.
-6. Supporting documents.
+5. Choose the booking site and complete only the fields shown for that site.
+6. Add slot preferences and upload the booking files requested by that route.
 
-The application is initially saved as Draft. The application is owned by the logged-in account. An agent can create multiple applicant records.
+This portal handles appointment slot booking requests, not visa applications or eligibility checks. IVAC requests need account login, primary Webfile details and the original Webfile PDF. UK VFS requests need the GWF reference and UKVI/VFS login details. Other VFS requests show their own booking reference and login fields. U.S. scheduling requests need the visa class, DS-160 confirmation and scheduling login. Booking-site passwords are encrypted before storage and shown only in an admin's individual request review. Never provide OTPs in this form; share a one-time code with the assigned agent only when the site asks for it during booking. Requests start as Draft and are owned by the logged-in account. Agents can submit multiple applicant requests.
 
 ## 3. Deposit funds
 
@@ -32,4 +32,4 @@ Use the application list and wallet ledger to review file status, priority reque
 
 ## 6. Document safety
 
-Only upload documents required for the application. Use clear, valid files. Do not upload passwords or unrelated sensitive information. The API starter currently stores uploads locally; secure customer/admin document download must be completed before production launch.
+Only upload files required for slot booking. Use clear files and never upload portal passwords or unrelated sensitive information. Customer and admin downloads use authenticated API access; production uploads should still use private storage and retention controls.

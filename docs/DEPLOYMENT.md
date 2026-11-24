@@ -27,6 +27,8 @@ API health check: `GET http://localhost:4000/api/v1/health`.
 
 - Use a managed/private MySQL database and a least-privilege database account.
 - Set a unique, high-entropy JWT secret (32+ characters; preferably generated securely).
+- Set `BOOKING_CREDENTIAL_KEY` to a private 32-byte key encoded as 64 hex characters. Generate it with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Keep it backed up and stable: changing it prevents decrypting saved booking-site passwords.
+- If the application still reports that the key is missing, confirm the value is exactly 64 hexadecimal characters (0–9, a–f), that it is set in the active app's environment or its project-root `.env`, and restart the Passenger application. Startup logs now report only whether the key format is valid; they never print the key.
 - Set exact allowed frontend origins in `CLIENT_ORIGIN`.
 - Run `npm ci`, `npm run db:generate`, and `npm run db:deploy` during deployment.
 - Run the API with a process manager/container and terminate TLS at a trusted reverse proxy.
@@ -37,6 +39,16 @@ API health check: `GET http://localhost:4000/api/v1/health`.
 ## Existing database migration
 
 The earlier project version used a single country field. The new version requires From Country and To Country. Back up the database first, generate a migration against a copy of production data, map every old application and price row to its correct From/To countries, validate foreign keys and unique price combinations, then deploy. Do not use `prisma migrate reset` against any database containing user data.
+
+Slot booking requests add `bookingSite` and `bookingDetails` to the existing `Application` table. Before deploying this version to an existing database, back it up and run:
+
+```sql
+ALTER TABLE `Application`
+  ADD COLUMN `bookingSite` VARCHAR(191) NOT NULL DEFAULT 'OTHER',
+  ADD COLUMN `bookingDetails` JSON NULL;
+```
+
+The application startup intentionally does not synchronize Prisma schema changes in production. Apply this SQL once, then deploy the application files and regenerate Prisma Client with `npm run db:generate`.
 
 ## Upload storage
 

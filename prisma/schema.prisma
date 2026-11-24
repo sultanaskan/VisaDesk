@@ -139,6 +139,8 @@ model Application {
   toCountryId     Int
   categoryId      Int
   centerId        Int
+  bookingSite     String             @default("OTHER")
+  bookingDetails  Json?
   visaType        String?
   applicantPhone  String?
   applicantEmail  String?

@@ -39,12 +39,12 @@ Check the application route, visa category, center, requested priority and amoun
 
 ## 6. Manage applications
 
-Review applicant details and documents using a secure admin interface. Update application status as work progresses. Never treat `PROCESSING` as proof that an appointment has been booked. Use `COMPLETED` only according to the company's defined completion criteria.
+Review each slot request by booking site. The review view displays only the fields supplied for that site, the applicant route and links to download uploaded booking files. Filter the queue by IVAC, UK VFS, other VFS Global, or U.S. Visa Scheduling. Booking-site passwords are encrypted at rest and returned only by the authenticated admin detail view. Keep `BOOKING_CREDENTIAL_KEY` private and backed up; never put it in source control. Do not record OTPs. Update status as work progresses; use `COMPLETED` only after the slot is actually booked.
 
 ## 7. Operational safeguards
 
 - Reconcile wallet ledger entries with payment records regularly.
 - Restrict admin access to named staff accounts.
 - Do not share JWT tokens or uploaded document paths.
-- Use a private document store and authenticated file streaming before production.
+- Keep uploaded booking files in private storage; downloads require an authenticated owner or admin session.
 - Keep a record of price changes and admin actions; a complete audit-log module remains to be implemented.
