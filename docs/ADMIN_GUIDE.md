@@ -39,7 +39,7 @@ Check the application route, visa category, center, requested priority and amoun
 
 ## 6. Manage applications
 
-Review each slot request by booking site. The review view displays only the fields supplied for that site, the applicant route and links to download uploaded booking files. Filter the queue by IVAC, UK VFS, other VFS Global, or U.S. Visa Scheduling. Booking-site passwords are encrypted at rest and returned only by the authenticated admin detail view. Keep `BOOKING_CREDENTIAL_KEY` private and backed up; never put it in source control. Do not record OTPs. Update status as work progresses; use `COMPLETED` only after the slot is actually booked.
+Use the site tabs above the queue to focus on IVAC, UK VFS, other VFS, U.S. Visa Scheduling, or other sites. Open a request to see that site's specific booking details and private uploaded files. Credentials are stored in the matching site's detail table; passwords are encrypted and shown only in the authenticated individual admin review view. Keep `BOOKING_CREDENTIAL_KEY` private and backed up; never put it in source control. Do not record OTPs. Update status as work progresses; use `COMPLETED` only after the slot is actually booked.
 
 ## 7. Operational safeguards
 

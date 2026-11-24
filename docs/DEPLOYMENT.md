@@ -40,15 +40,7 @@ API health check: `GET http://localhost:4000/api/v1/health`.
 
 The earlier project version used a single country field. The new version requires From Country and To Country. Back up the database first, generate a migration against a copy of production data, map every old application and price row to its correct From/To countries, validate foreign keys and unique price combinations, then deploy. Do not use `prisma migrate reset` against any database containing user data.
 
-Slot booking requests add `bookingSite` and `bookingDetails` to the existing `Application` table. Before deploying this version to an existing database, back it up and run:
-
-```sql
-ALTER TABLE `Application`
-  ADD COLUMN `bookingSite` VARCHAR(191) NOT NULL DEFAULT 'OTHER',
-  ADD COLUMN `bookingDetails` JSON NULL;
-```
-
-The application startup intentionally does not synchronize Prisma schema changes in production. Apply this SQL once, then deploy the application files and regenerate Prisma Client with `npm run db:generate`.
+Earlier slot-request releases added `bookingSite` and `bookingDetails` to `Application`. This release stores new site-specific data in five one-to-one tables (`IvacBooking`, `UkVfsBooking`, `VfsBooking`, `UsVisaBooking`, `OtherBooking`). Back up the production database, then run [`prisma/slot_booking_site_tables.sql`](../prisma/slot_booking_site_tables.sql) once. The old JSON column remains for existing records and compatibility. The application does not synchronize schema changes in production. Deploy the files and run `npm run db:generate` before restarting Passenger.
 
 ## Upload storage
 

@@ -54,111 +54,193 @@ enum LedgerType {
 }
 
 model User {
-  id             Int           @id @default(autoincrement())
-  name           String
-  email          String        @unique
-  phone          String?       @unique
-  passwordHash   String
-  role           UserRole      @default(INDIVIDUAL)
-  status         AccountStatus @default(ACTIVE)
-  walletBalance  Decimal       @default(0.00) @db.Decimal(12, 2)
-  walletReserved Decimal       @default(0.00) @db.Decimal(12, 2)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deposits       Deposit[]
-  applications  Application[]
-  ledgerEntries  WalletLedger[]
-  reviewedDeposits Deposit[]   @relation("DepositReviewer")
+  id                 Int               @id @default(autoincrement())
+  name               String
+  email              String            @unique
+  phone              String?           @unique
+  passwordHash       String
+  role               UserRole          @default(INDIVIDUAL)
+  status             AccountStatus     @default(ACTIVE)
+  walletBalance      Decimal           @default(0.00) @db.Decimal(12, 2)
+  walletReserved     Decimal           @default(0.00) @db.Decimal(12, 2)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deposits           Deposit[]
+  applications       Application[]
+  ledgerEntries      WalletLedger[]
+  reviewedDeposits   Deposit[]         @relation("DepositReviewer")
   reviewedPriorities PriorityRequest[] @relation("PriorityReviewer")
-  priorityRequests PriorityRequest[] @relation("PriorityRequestUser")
+  priorityRequests   PriorityRequest[] @relation("PriorityRequestUser")
 }
 
 model Deposit {
-  id              Int           @id @default(autoincrement())
-  userId          Int
-  amount          Decimal       @db.Decimal(12, 2)
-  paymentMethod   String
-  senderAccount   String?
-  transactionRef  String
-  proofPath       String?
-  status          DepositStatus @default(PENDING)
-  adminNote       String?       @db.Text
-  reviewedById    Int?
-  reviewedAt      DateTime?
-  createdAt       DateTime      @default(now())
-  user            User          @relation(fields: [userId], references: [id])
-  reviewedBy      User?         @relation("DepositReviewer", fields: [reviewedById], references: [id])
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  amount         Decimal       @db.Decimal(12, 2)
+  paymentMethod  String
+  senderAccount  String?
+  transactionRef String
+  proofPath      String?
+  status         DepositStatus @default(PENDING)
+  adminNote      String?       @db.Text
+  reviewedById   Int?
+  reviewedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id])
+  reviewedBy     User?         @relation("DepositReviewer", fields: [reviewedById], references: [id])
+
   @@index([userId, status])
 }
 
 model Country {
-  id        Int @id @default(autoincrement())
-  name      String @unique
-  code      String @unique
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
-  fromApplications Application[] @relation("ApplicationFromCountry")
-  toApplications Application[] @relation("ApplicationToCountry")
-  centers VisaCenter[]
-  fromPrices PriorityPrice[] @relation("PriceFromCountry")
-  toPrices PriorityPrice[] @relation("PriceToCountry")
+  id               Int             @id @default(autoincrement())
+  name             String          @unique
+  code             String          @unique
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  fromApplications Application[]   @relation("ApplicationFromCountry")
+  toApplications   Application[]   @relation("ApplicationToCountry")
+  centers          VisaCenter[]
+  fromPrices       PriorityPrice[] @relation("PriceFromCountry")
+  toPrices         PriorityPrice[] @relation("PriceToCountry")
 }
 
 model VisaCategory {
-  id        Int @id @default(autoincrement())
-  name      String @unique
-  description String? @db.Text
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
+  id           Int             @id @default(autoincrement())
+  name         String          @unique
+  description  String?         @db.Text
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
   applications Application[]
-  prices PriorityPrice[]
+  prices       PriorityPrice[]
 }
 
 model VisaCenter {
-  id        Int @id @default(autoincrement())
-  countryId Int
-  name      String
-  code      String?
-  address   String? @db.Text
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
-  country Country @relation(fields: [countryId], references: [id])
+  id           Int             @id @default(autoincrement())
+  countryId    Int
+  name         String
+  code         String?
+  address      String?         @db.Text
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  country      Country         @relation(fields: [countryId], references: [id])
   applications Application[]
-  prices PriorityPrice[]
+  prices       PriorityPrice[]
+
   @@unique([countryId, name])
   @@index([countryId, isActive])
 }
 
 model Application {
-  id              Int                @id @default(autoincrement())
-  userId          Int
-  referenceCode   String             @unique
-  applicantName   String
-  passportNumber  String
-  fromCountryId   Int
-  toCountryId     Int
-  categoryId      Int
-  centerId        Int
-  bookingSite     String             @default("OTHER")
-  bookingDetails  Json?
-  visaType        String?
-  applicantPhone  String?
-  applicantEmail  String?
-  notes           String?            @db.Text
-  status          ApplicationStatus  @default(DRAFT)
-  currentPriority PriorityLevel?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  user            User               @relation(fields: [userId], references: [id])
-  fromCountry     Country            @relation("ApplicationFromCountry", fields: [fromCountryId], references: [id])
-  toCountry       Country            @relation("ApplicationToCountry", fields: [toCountryId], references: [id])
-  category        VisaCategory       @relation(fields: [categoryId], references: [id])
-  center          VisaCenter         @relation(fields: [centerId], references: [id])
-  documents       ApplicationDocument[]
+  id               Int                   @id @default(autoincrement())
+  userId           Int
+  referenceCode    String                @unique
+  applicantName    String
+  passportNumber   String
+  fromCountryId    Int
+  toCountryId      Int
+  categoryId       Int
+  centerId         Int
+  bookingSite      String                @default("OTHER")
+  bookingDetails   Json?
+  visaType         String?
+  applicantPhone   String?
+  applicantEmail   String?
+  notes            String?               @db.Text
+  status           ApplicationStatus     @default(DRAFT)
+  currentPriority  PriorityLevel?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  user             User                  @relation(fields: [userId], references: [id])
+  fromCountry      Country               @relation("ApplicationFromCountry", fields: [fromCountryId], references: [id])
+  toCountry        Country               @relation("ApplicationToCountry", fields: [toCountryId], references: [id])
+  category         VisaCategory          @relation(fields: [categoryId], references: [id])
+  center           VisaCenter            @relation(fields: [centerId], references: [id])
+  documents        ApplicationDocument[]
   priorityRequests PriorityRequest[]
+  ivacBooking      IvacBooking?
+  ukVfsBooking     UkVfsBooking?
+  vfsBooking       VfsBooking?
+  usVisaBooking    UsVisaBooking?
+  otherBooking     OtherBooking?
+
   @@index([userId, status])
   @@index([passportNumber])
   @@index([fromCountryId, toCountryId, categoryId, centerId])
+}
+
+model IvacBooking {
+  id                Int         @id @default(autoincrement())
+  applicationId     Int         @unique
+  loginEmail        String
+  loginPhone        String
+  encryptedPassword String      @db.Text
+  webfileNumber     String
+  dateOfBirth       DateTime    @db.Date
+  nationalId        String
+  preferredCenter   String
+  preferredDate     DateTime?   @db.Date
+  secondaryWebfiles String?     @db.Text
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model UkVfsBooking {
+  id                Int         @id @default(autoincrement())
+  applicationId     Int         @unique
+  loginEmail        String
+  loginPhone        String
+  encryptedPassword String      @db.Text
+  gwfReference      String
+  dateOfBirth       DateTime    @db.Date
+  passportExpiry    DateTime    @db.Date
+  preferredCenter   String
+  appointmentType   String?
+  preferredDate     DateTime?   @db.Date
+  groupSize         Int?
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model VfsBooking {
+  id                   Int         @id @default(autoincrement())
+  applicationId        Int         @unique
+  loginEmail           String
+  loginPhone           String
+  encryptedPassword    String      @db.Text
+  applicationReference String
+  dateOfBirth          DateTime    @db.Date
+  passportExpiry       DateTime    @db.Date
+  preferredCenter      String
+  appointmentType      String?
+  preferredDate        DateTime?   @db.Date
+  groupSize            Int?
+  application          Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model UsVisaBooking {
+  id                Int         @id @default(autoincrement())
+  applicationId     Int         @unique
+  loginEmail        String
+  loginPhone        String
+  encryptedPassword String      @db.Text
+  visaClass         String
+  ds160Confirmation String
+  dateOfBirth       DateTime    @db.Date
+  passportExpiry    DateTime    @db.Date
+  nationality       String
+  feeReceiptNumber  String?
+  interviewLocation String
+  preferredDate     DateTime?   @db.Date
+  groupSize         Int?
+  application       Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model OtherBooking {
+  id                   Int         @id @default(autoincrement())
+  applicationId        Int         @unique
+  siteName             String
+  applicationReference String?
+  preferredDate        DateTime?   @db.Date
+  application          Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model ApplicationDocument {
@@ -170,58 +252,62 @@ model ApplicationDocument {
   sizeBytes     Int
   createdAt     DateTime    @default(now())
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
   @@index([applicationId])
 }
 
 model PriorityPrice {
-  id            Int           @id @default(autoincrement())
-  fromCountryId Int
-  toCountryId   Int
-  categoryId    Int
-  centerId   Int
-  level      PriorityLevel
-  price      Decimal       @db.Decimal(12, 2)
-  isActive   Boolean       @default(true)
-  updatedAt  DateTime      @updatedAt
-  fromCountry Country      @relation("PriceFromCountry", fields: [fromCountryId], references: [id])
-  toCountry   Country      @relation("PriceToCountry", fields: [toCountryId], references: [id])
-  category   VisaCategory @relation(fields: [categoryId], references: [id])
-  center     VisaCenter   @relation(fields: [centerId], references: [id])
+  id               Int               @id @default(autoincrement())
+  fromCountryId    Int
+  toCountryId      Int
+  categoryId       Int
+  centerId         Int
+  level            PriorityLevel
+  price            Decimal           @db.Decimal(12, 2)
+  isActive         Boolean           @default(true)
+  updatedAt        DateTime          @updatedAt
+  fromCountry      Country           @relation("PriceFromCountry", fields: [fromCountryId], references: [id])
+  toCountry        Country           @relation("PriceToCountry", fields: [toCountryId], references: [id])
+  category         VisaCategory      @relation(fields: [categoryId], references: [id])
+  center           VisaCenter        @relation(fields: [centerId], references: [id])
   priorityRequests PriorityRequest[]
+
   @@unique([fromCountryId, toCountryId, categoryId, centerId, level])
   @@index([fromCountryId, toCountryId, categoryId, centerId])
 }
 
 model PriorityRequest {
-  id             Int                   @id @default(autoincrement())
-  userId         Int
-  applicationId  Int
-  level          PriorityLevel
-  amount         Decimal               @db.Decimal(12, 2)
-  priceRuleId    Int?
-  status         PriorityRequestStatus @default(PENDING)
-  adminNote      String?               @db.Text
-  reviewedById   Int?
-  reviewedAt     DateTime?
-  createdAt      DateTime              @default(now())
-  user           User                  @relation("PriorityRequestUser", fields: [userId], references: [id])
-  application    Application           @relation(fields: [applicationId], references: [id])
-  priceRule      PriorityPrice?        @relation(fields: [priceRuleId], references: [id], onDelete: SetNull)
-  reviewedBy     User?                 @relation("PriorityReviewer", fields: [reviewedById], references: [id])
+  id            Int                   @id @default(autoincrement())
+  userId        Int
+  applicationId Int
+  level         PriorityLevel
+  amount        Decimal               @db.Decimal(12, 2)
+  priceRuleId   Int?
+  status        PriorityRequestStatus @default(PENDING)
+  adminNote     String?               @db.Text
+  reviewedById  Int?
+  reviewedAt    DateTime?
+  createdAt     DateTime              @default(now())
+  user          User                  @relation("PriorityRequestUser", fields: [userId], references: [id])
+  application   Application           @relation(fields: [applicationId], references: [id])
+  priceRule     PriorityPrice?        @relation(fields: [priceRuleId], references: [id], onDelete: SetNull)
+  reviewedBy    User?                 @relation("PriorityReviewer", fields: [reviewedById], references: [id])
+
   @@index([userId, status])
   @@index([applicationId, status])
 }
 
 model WalletLedger {
-  id             Int        @id @default(autoincrement())
-  userId         Int
-  type           LedgerType
-  amount         Decimal    @db.Decimal(12, 2)
-  balanceAfter   Decimal    @db.Decimal(12, 2)
-  referenceType  String?
-  referenceId    Int?
-  description    String?
-  createdAt      DateTime   @default(now())
-  user           User       @relation(fields: [userId], references: [id])
+  id            Int        @id @default(autoincrement())
+  userId        Int
+  type          LedgerType
+  amount        Decimal    @db.Decimal(12, 2)
+  balanceAfter  Decimal    @db.Decimal(12, 2)
+  referenceType String?
+  referenceId   Int?
+  description   String?
+  createdAt     DateTime   @default(now())
+  user          User       @relation(fields: [userId], references: [id])
+
   @@index([userId, createdAt])
 }

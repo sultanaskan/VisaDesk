@@ -14,7 +14,7 @@ Submit the applicant's name and passport number, then select:
 5. Choose the booking site and complete only the fields shown for that site.
 6. Add slot preferences and upload the booking files requested by that route.
 
-This portal handles appointment slot booking requests, not visa applications or eligibility checks. IVAC requests need account login, primary Webfile details and the original Webfile PDF. UK VFS requests need the GWF reference and UKVI/VFS login details. Other VFS requests show their own booking reference and login fields. U.S. scheduling requests need the visa class, DS-160 confirmation and scheduling login. Booking-site passwords are encrypted before storage and shown only in an admin's individual request review. Never provide OTPs in this form; share a one-time code with the assigned agent only when the site asks for it during booking. Requests start as Draft and are owned by the logged-in account. Agents can submit multiple applicant requests.
+This portal handles appointment slot booking requests, not visa applications or eligibility checks. Click the site tab above the form (India/IVAC, UK/VFS, other VFS, USA, or other site). The form then shows only the fields for that website. Booking-site passwords are encrypted in their site's own detail table and shown only in an admin's individual request review. Never provide OTPs in this form; share a one-time code with the assigned agent only when the site asks for it during booking. Requests start as Draft and are owned by the logged-in account. Agents can submit multiple applicant requests.
 
 ## 3. Deposit funds
 

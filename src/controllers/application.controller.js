@@ -47,9 +47,22 @@ function redactBookingDetails(details = {}) {
 function withoutBookingCredentials(application) {
   return { ...application, bookingDetails: redactBookingDetails(application.bookingDetails || {}) };
 }
+const SITE_CREATE = { IVAC: "ivacBooking", UK_VFS: "ukVfsBooking", VFS_GLOBAL: "vfsBooking", US_VISA_SCHEDULING: "usVisaBooking", OTHER: "otherBooking" };
+function siteRecord(site, details) {
+  const encryptedPassword = site === "OTHER" ? undefined : encryptBookingDetails({ loginPassword: details.loginPassword }).loginPassword;
+  const common = site === "OTHER" ? {} : { loginEmail: details.loginEmail, loginPhone: details.loginPhone, encryptedPassword };
+  const date = value => value ? new Date(`${value}T00:00:00.000Z`) : null;
+  switch (site) {
+    case "IVAC": return { ...common, webfileNumber: details.webfileNumber, dateOfBirth: date(details.dateOfBirth), nationalId: details.nationalId, preferredCenter: details.ivacCenter, preferredDate: date(details.preferredDate), secondaryWebfiles: details.secondaryWebfiles || null };
+    case "UK_VFS": return { ...common, gwfReference: details.applicationReference, dateOfBirth: date(details.dateOfBirth), passportExpiry: date(details.passportExpiry), preferredCenter: details.vfsCenter, appointmentType: details.appointmentType || null, preferredDate: date(details.preferredDate), groupSize: details.groupSize ? Number(details.groupSize) : null };
+    case "VFS_GLOBAL": return { ...common, applicationReference: details.applicationReference, dateOfBirth: date(details.dateOfBirth), passportExpiry: date(details.passportExpiry), preferredCenter: details.vfsCenter, appointmentType: details.appointmentType || null, preferredDate: date(details.preferredDate), groupSize: details.groupSize ? Number(details.groupSize) : null };
+    case "US_VISA_SCHEDULING": return { ...common, visaClass: details.visaClass, ds160Confirmation: details.ds160Confirmation, dateOfBirth: date(details.dateOfBirth), passportExpiry: date(details.passportExpiry), nationality: details.nationality, feeReceiptNumber: details.feeReceiptNumber || null, interviewLocation: details.interviewLocation, preferredDate: date(details.preferredDate), groupSize: details.groupSize ? Number(details.groupSize) : null };
+    default: return { siteName: details.siteName, applicationReference: details.applicationReference || null, preferredDate: date(details.preferredDate) };
+  }
+}
 
 export async function createApplication(req, res) {
-  const { credentialConsent, ...data } = req.validated.body;
+  const { credentialConsent, bookingDetails = {}, ...data } = req.validated.body;
   const requiredBySite = {
     IVAC: ["loginEmail", "loginPhone", "loginPassword", "webfileNumber", "dateOfBirth", "nationalId", "ivacCenter"],
     UK_VFS: ["loginEmail", "loginPhone", "loginPassword", "applicationReference", "dateOfBirth", "passportExpiry", "vfsCenter"],
@@ -57,7 +70,7 @@ export async function createApplication(req, res) {
     US_VISA_SCHEDULING: ["loginEmail", "loginPhone", "loginPassword", "visaClass", "ds160Confirmation", "dateOfBirth", "passportExpiry", "nationality", "interviewLocation"]
   };
   const missingBookingFields = (requiredBySite[data.bookingSite] || [])
-    .filter((key) => !String(data.bookingDetails?.[key] ?? "").trim());
+    .filter((key) => !String(bookingDetails?.[key] ?? "").trim());
   if (missingBookingFields.length) {
     throw new HttpError(400, `Complete the required ${data.bookingSite} slot booking fields: ${missingBookingFields.join(", ")}.`);
   }
@@ -80,17 +93,11 @@ export async function createApplication(req, res) {
     throw new HttpError(400, "Select active from/to countries, a visa category, and an application center located in the from country.");
   }
   const referenceCode = `VSA-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-  const application = await prisma.application.create({
-    data: {
-      ...data, bookingDetails: encryptBookingDetails(data.bookingDetails), referenceCode, userId: req.user.id,
-      documents: req.files?.length ? {
-        create: req.files.map((file) => ({
-          originalName: file.originalname, storedName: file.filename,
-          mimeType: file.mimetype, sizeBytes: file.size
-        }))
-      } : undefined
-    },
-    include: { documents: true, fromCountry: true, toCountry: true, category: true, center: true }
+  const application = await prisma.$transaction(async tx => {
+    const created = await tx.application.create({ data: { ...data, referenceCode, userId: req.user.id, documents: req.files?.length ? { create: req.files.map(file => ({ originalName: file.originalname, storedName: file.filename, mimeType: file.mimetype, sizeBytes: file.size })) } : undefined } });
+    const relation = SITE_CREATE[data.bookingSite];
+    await tx[relation].create({ data: { applicationId: created.id, ...siteRecord(data.bookingSite, bookingDetails) } });
+    return tx.application.findUnique({ where: { id: created.id }, include: { documents: true, fromCountry: true, toCountry: true, category: true, center: true } });
   });
   res.status(201).json({ success: true, message: "Slot booking request saved as draft.", data: withoutBookingCredentials(application) });
 }
@@ -119,11 +126,22 @@ export async function adminGetApplication(req, res) {
     include: {
       user: { select: { id: true, name: true, email: true, phone: true, role: true } },
       documents: true, fromCountry: true, toCountry: true, category: true, center: true,
-      priorityRequests: { orderBy: { createdAt: "desc" } }
+      priorityRequests: { orderBy: { createdAt: "desc" } },
+      ivacBooking: true, ukVfsBooking: true, vfsBooking: true, usVisaBooking: true, otherBooking: true
     }
   });
   if (!application) throw new HttpError(404, "Slot booking request not found.");
-  res.json({ success: true, data: { ...application, bookingDetails: decryptBookingDetails(application.bookingDetails || {}) } });
+  const relation = SITE_CREATE[application.bookingSite];
+  const row = application[relation];
+  let bookingDetails = {};
+  if (row) {
+    const { id, applicationId, encryptedPassword, ...fields } = row;
+    bookingDetails = fields;
+    if (encryptedPassword) bookingDetails.loginPassword = decryptBookingDetails({ loginPassword: encryptedPassword }).loginPassword;
+  } else {
+    bookingDetails = decryptBookingDetails(application.bookingDetails || {});
+  }
+  res.json({ success: true, data: { ...application, bookingDetails } });
 }
 
 export async function downloadApplicationDocument(req, res) {
